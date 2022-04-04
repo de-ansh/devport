@@ -1,9 +1,11 @@
+from pickle import FALSE
 from turtle import title
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from .models import Project
-from .forms import ProjectForm
+from .forms import ProjectForm,ReviewForm
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 from .utils import searchProjects,paginateProjects
 def projects(request):
@@ -14,8 +16,16 @@ def projects(request):
 
 def project(request,pk):
     projectobj= Project.objects.get(id=pk)
-    
-    return render(request,'projects/single-project.html', {'project':projectobj,})
+    form = ReviewForm()
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        review = form.save( commit= FALSE)
+        review.project = projectobj
+        review.owner = request.user.profile
+        review.save()
+        #project count
+        messages.success(request, 'Your review was successfully submitted!')
+    return render(request,'projects/single-project.html', {'project':projectobj, 'form': form})
 @login_required(login_url="login")
 def createProject(request):
     profile= request.user.profile
@@ -56,3 +66,5 @@ def deleteProject(request,pk):
         return redirect('account')
     context={'object':project}
     return render(request,'delete_template.html',context)
+
+
