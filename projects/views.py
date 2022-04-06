@@ -1,4 +1,5 @@
 from pickle import FALSE
+import re
 from turtle import title
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
@@ -19,13 +20,17 @@ def project(request,pk):
     form = ReviewForm()
     if request.method == 'POST':
         form = ReviewForm(request.POST)
-        review = form.save( commit= FALSE)
+        review = form.save(commit = FALSE)
         review.project = projectobj
         review.owner = request.user.profile
         review.save()
         #project count
         messages.success(request, 'Your review was successfully submitted!')
-    return render(request,'projects/single-project.html', {'project':projectobj, 'form': form})
+        return redirect('project',pk=projectobj.id)
+    return render(request,'projects/single-project.html',{'project':projectobj, 'form': form})
+
+
+
 @login_required(login_url="login")
 def createProject(request):
     profile= request.user.profile
@@ -34,7 +39,7 @@ def createProject(request):
     if request.method=='POST':
         form=ProjectForm(request.POST,request.FILES)
         if form.is_valid():
-            project=form.save(commit=False)
+            project=form.save(commit=True)
             project.owner=profile
             project.save()
             return redirect('account')
